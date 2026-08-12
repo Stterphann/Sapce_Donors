@@ -1,2 +1,11 @@
-# Sapce_Donors
-Este app web jogável foi criado para ajudar na sensibilização de famílias e profissionais na área de doação de órgãos para transplantes. Esta ação visa trazer os principais desafios da doação como obstáculos em um jogo famoso da década de 90.
+
+  # Space Defenders Game Design
+
+  This is a code bundle for Space Defenders Game Design. The original project is available at https://www.figma.com/design/lCacaTZWFgwqwITVVkZKBy/Space-Defenders-Game-Design.
+
+  ## Running the code
+
+  Run `npm i` to install the dependencies.
+
+  Run `npm run dev` to start the development server.
+  
