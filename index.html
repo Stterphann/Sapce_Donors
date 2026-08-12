@@ -173,6 +173,13 @@
     canvas.width = 400;
     canvas.height = 600;
 
+    // --- CARREGAMENTO DAS IMAGENS EM BASE64 ---
+    const playerImg = new Image();
+    playerImg.src = "data:image/png;base64,COLE_AQUI_O_BASE64_DA_NAVE"; // Substitua pela string Base64 da Nave
+
+    const obstacleImg = new Image();
+    obstacleImg.src = "data:image/png;base64,COLE_AQUI_O_BASE64_DO_METEORO"; // Substitua pela string Base64 do Meteoro
+
     // Elementos de Interface
     const screenStart = document.getElementById('screen-start');
     const screenIntro = document.getElementById('screen-intro');
@@ -203,7 +210,7 @@
         requestAnimationFrame(update);
     });
 
-    // Áudio Sintetizado (Sem arquivos externos necessários)
+    // Áudio Sintetizado
     let audioCtx;
     function initAudio() {
         if (!audioCtx) {
@@ -241,7 +248,7 @@
         osc.stop(audioCtx.currentTime + 0.3);
     }
 
-    // Lista de Obstáculos Nomeados (Aparecem apenas 1x cada)
+    // Lista de Obstáculos Nomeados
     const namedObstacles = [
         { label: "Negativa Familiar", text: "A família é quem autoriza a doação. Informar seus parentes em vida é a chave para transformar essa decisão." },
         { label: "Corpo Deformado", text: "Mito! A retirada dos órgãos é uma cirurgia respeitosa e o corpo não fica deformado para o sepultamento." },
@@ -261,12 +268,12 @@
     let gamePaused = false;
     let victoryPhase = false;
 
-    // Entidades
+    // Entidades (Nave posicionada mais para cima: canvas.height - 110)
     const player = {
-        x: canvas.width / 2 - 15,
-        y: canvas.height - 50,
-        width: 30,
-        height: 30,
+        x: canvas.width / 2 - 20,
+        y: canvas.height - 110,
+        width: 40,
+        height: 40,
         speed: 5,
         dx: 0
     };
@@ -276,7 +283,7 @@
     let fallingOrgans = [];
     let spawnTimer = 0;
 
-    // Estrelas de Fundo (Pixelated Starfield)
+    // Estrelas de Fundo
     const stars = Array.from({ length: 40 }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
@@ -327,18 +334,17 @@
         let isNamed = false;
         let data = null;
 
-        // Chance de gerar um obstáculo nomeado se ainda existirem pendentes
         if (pendingObstacles.length > 0 && Math.random() < 0.6) {
             isNamed = true;
-            data = pendingObstacles.shift(); // Remove para garantir que só apareça 1x
+            data = pendingObstacles.shift();
         }
 
         obstacles.push({
             x: Math.random() * (canvas.width - 90),
             y: -50,
             width: 90,
-            height: 40,
-            speed: 1.2, // Nível fácil
+            height: 45,
+            speed: 1.2,
             isNamed: isNamed,
             label: isNamed ? data.label : "Obstáculo",
             text: isNamed ? data.text : ""
@@ -349,7 +355,6 @@
         victoryPhase = true;
         controls.classList.add('hidden');
         
-        // Criar linha de órgãos (Corações estilizados em pixel art)
         const organTypes = ['❤️', '🫁', '🫀'];
         for (let i = 0; i < 12; i++) {
             fallingOrgans.push({
@@ -365,7 +370,6 @@
     function update() {
         if (!gameRunning || gamePaused) return;
 
-        // Mover jogador
         if (keys['ArrowLeft'] || keys['KeyA']) player.dx = -player.speed;
         else if (keys['ArrowRight'] || keys['KeyD']) player.dx = player.speed;
         else player.dx = 0;
@@ -374,32 +378,27 @@
         if (player.x < 0) player.x = 0;
         if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
 
-        // Mover Projéteis
         bullets.forEach((b, index) => {
             b.y -= b.speed;
             if (b.y < -10) bullets.splice(index, 1);
         });
 
-        // Spawn de Obstáculos (apenas na fase normal)
         if (!victoryPhase) {
             spawnTimer++;
-            if (spawnTimer > 120) { // Intervalo amplo para nível fácil
+            if (spawnTimer > 120) {
                 spawnObstacle();
                 spawnTimer = 0;
             }
 
-            // Mover Obstáculos
             obstacles.forEach((obs, oIndex) => {
                 obs.y += obs.speed;
 
-                // Colisão Projétil x Obstáculo
                 bullets.forEach((b, bIndex) => {
                     if (b.x < obs.x + obs.width &&
                         b.x + b.width > obs.x &&
                         b.y < obs.y + obs.height &&
                         b.y + b.height > obs.y) {
                         
-                        // Destruído
                         playExplosionSound();
                         bullets.splice(bIndex, 1);
 
@@ -413,14 +412,12 @@
                         
                         obstacles.splice(oIndex, 1);
 
-                        // Verificar Vitória
                         if (destroyedNamedCount >= totalNamedCount) {
                             triggerVictorySequence();
                         }
                     }
                 });
 
-                // Reset de posição se sair da tela sem ser destruído (se for nomeado, devolve à fila)
                 if (obs.y > canvas.height) {
                     if (obs.isNamed) {
                         pendingObstacles.push({ label: obs.label, text: obs.text });
@@ -429,12 +426,10 @@
                 }
             });
         } else {
-            // Animação de Vitória: Mover órgãos descendo até a nave
             fallingOrgans.forEach((organ) => {
                 organ.y += organ.speed;
             });
 
-            // Se o primeiro órgão alcançar a nave, encerra e exibe mensagem final
             if (fallingOrgans.length > 0 && fallingOrgans[0].y >= player.y - 30) {
                 gameRunning = false;
                 setTimeout(() => {
@@ -443,7 +438,6 @@
             }
         }
 
-        // Fundo (estrelas)
         stars.forEach(star => {
             star.y += star.speed;
             if (star.y > canvas.height) star.y = 0;
@@ -461,41 +455,45 @@
         ctx.fillStyle = '#050510';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Estrelas
-        ctx.fillStyle = '#ffffff';
+        stars.fillStyle = '#ffffff';
         stars.forEach(s => ctx.fillRect(s.x, s.y, s.size, s.size));
 
-        // Desenhar Nave Pixelada
-        ctx.fillStyle = '#00ffcc';
-        ctx.fillRect(player.x + 12, player.y, 6, 6);
-        ctx.fillRect(player.x + 6, player.y + 6, 18, 6);
-        ctx.fillRect(player.x, player.y + 12, 30, 12);
-        ctx.fillStyle = '#ff0055';
-        ctx.fillRect(player.x + 3, player.y + 24, 6, 6);
-        ctx.fillRect(player.x + 21, player.y + 24, 6, 6);
+        // Desenhar Nave (Imagem Base64 ou Fallback Pixel Art)
+        if (playerImg.complete && playerImg.naturalWidth !== 0) {
+            ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+        } else {
+            ctx.fillStyle = '#00ffcc';
+            ctx.fillRect(player.x + 16, player.y, 8, 8);
+            ctx.fillRect(player.x + 8, player.y + 8, 24, 8);
+            ctx.fillRect(player.x, player.y + 16, 40, 16);
+            ctx.fillStyle = '#ff0055';
+            ctx.fillRect(player.x + 4, player.y + 32, 8, 8);
+            ctx.fillRect(player.x + 28, player.y + 32, 8, 8);
+        }
 
         // Desenhar Tiros
         ctx.fillStyle = '#ffcc00';
         bullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
 
-        // Desenhar Meteoro / Obstáculos
+        // Desenhar Meteoro (Imagem Base64 ou Fallback Pixel Art)
         obstacles.forEach(obs => {
-            // Corpo do meteoro (Pixel art simples)
-            ctx.fillStyle = obs.isNamed ? '#8b4513' : '#555555';
-            ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-            
-            // Borda/Detalhes
-            ctx.fillStyle = obs.isNamed ? '#a0522d' : '#777777';
-            ctx.fillRect(obs.x + 4, obs.y + 4, obs.width - 8, obs.height - 8);
+            if (obstacleImg.complete && obstacleImg.naturalWidth !== 0) {
+                ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height);
+            } else {
+                ctx.fillStyle = obs.isNamed ? '#8b4513' : '#555555';
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                ctx.fillStyle = obs.isNamed ? '#a0522d' : '#777777';
+                ctx.fillRect(obs.x + 4, obs.y + 4, obs.width - 8, obs.height - 8);
+            }
 
-            // Texto dentro do Meteoro (visível para mobile)
+            // Texto dentro do Meteoro
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 11px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(obs.label, obs.x + obs.width / 2, obs.y + obs.height / 2 + 4);
         });
 
-        // Desenhar Órgãos caindo na animação final
+        // Desenhar Órgãos caindo na vitória
         if (victoryPhase) {
             ctx.font = '24px serif';
             ctx.textAlign = 'center';
